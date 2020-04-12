@@ -26,7 +26,11 @@ const styles = theme => ({
     },
     avatar: {
         margin: 10,
-        backgroundColor: 'white',
+        backgroudColor: 'white',
+    },
+    link: {
+        textDecoration: 'none',
+        color: 'white',
     },
 });
 
@@ -35,7 +39,7 @@ class Header extends Component {
     constructor(){
         super();
 
-        this.state = { inLogin: false, username: '', profilePicUrl: '' }
+        this.state = { isLogin: false, username: '', profilePicUrl: '' }
     }
 
     componentDidMount() {
@@ -43,7 +47,7 @@ class Header extends Component {
             if (user) {
                 this.setState({ isLogin: true, username: user.displayName, profilePicUrl: user.photoURL });
             } else {
-                this.setState({ inLogin: false, username: '', profilePicUrl: '' });
+                this.setState({ isLogin: false, username: '', profilePicUrl: '' });
             }
         });
     }
@@ -70,7 +74,7 @@ class Header extends Component {
         return (
             <div>
                 <Button color="inherit" className={classes.button}>
-                    <Avatar alt="profile image" src={'${this.state.profilePicUrl}'} className={classes.avatar} />
+                    <Avatar alt="profile image" src={`${this.state.profilePicUrl}`} className={classes.avatar} />
                     {this.state.username}
                 </Button>
                 <Button color="inherit" className={classes.button} onClick={this.googleSignOut}>

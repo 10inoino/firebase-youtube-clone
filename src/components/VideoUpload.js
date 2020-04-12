@@ -24,7 +24,7 @@ class Upload extends Component {
     async fileUpload(video) {
         try {
             const userUid = firebase.auth().currentUser.uid;
-            const filePath = 'videos/${userUid}/${video.name}';
+            const filePath = `videos/${userUid}/${video.name}`;
             const videoStorageRef = firebase.storage().ref(filePath);
             const fileSnapshot = await videoStorageRef.put(video);
 
@@ -38,15 +38,15 @@ class Upload extends Component {
 
     render() {
         return (
-            <from onSubmit={e => this.handleSubmit(e)}>
+            <form onSubmit={e => this.handleSubmit(e)}>
                 <h2>Video Upload</h2>
                 <input 
-                    type='file'
+                    type="file"
                     accept="video/*"
                     onChange={e => this.handleChange(e)}
                 />
                 <button type="submit">Upload</button>
-            </from>
+            </form>
         );
     }
 }
