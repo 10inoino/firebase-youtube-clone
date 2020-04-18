@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
+import LoadingOverlay from 'react-loading-overlay';
 import firebase from 'firebase/app';
 import 'firebase/storage';
+import 'firebase/firestore';
+import _ from 'lodash';
 
 class Upload extends Component {
     constructor(props) {
         super(props);
-        this.state = { video: null }
+        this.state = { video: null, loading: false }
     }
 
     handleChange = event => {
@@ -18,17 +21,44 @@ class Upload extends Component {
     handleSubmit = event => {
         event.preventDefault();
 
+        this.setState({ loading: true });
         this.fileUpload(this.state.video);
     }
  
     async fileUpload(video) {
         try {
+
             const userUid = firebase.auth().currentUser.uid;
             const filePath = `videos/${userUid}/${video.name}`;
             const videoStorageRef = firebase.storage().ref(filePath);
-            const fileSnapshot = await videoStorageRef.put(video);
+            const idToken = await firebase.auth().currentUser.getIdToken(true);
+            const metadataForStorage = {
+                customMetadata: {
+                    idToken: idToken
+                }
+            };
+            const fileSnapshot = await videoStorageRef.put(video,metadataForStorage);
 
-            console.log(fileSnapshot);
+            // mp4以外の動画は、Cloud Function上で、トランスコードした後にメタデータをFirestoreに保存する
+            if (video.type === 'video/mp4') {
+                const downloadURL = await videoStorageRef.getDownloadURL();
+                let metadataForFirestore = _.omitBy(fileSnapshot.metadata, _.isEmpty);
+                metadataForFirestore = Object.assign(metadataForFirestore,{downloadURL: downloadURL});
+
+                this.saveVideoMetadata(metadataForFirestore);
+            }
+
+            if (fileSnapshot.state === 'success') {
+                console.log(fileSnapshot);
+
+                this.setState({ video: null, loading: false });
+            } else {
+                console.log(fileSnapshot);
+
+                this.setState({ video: null, loading: false });
+                alert('ファイルのアップロードに失敗しました！');
+            }
+
         } catch(error) {
             console.log(error);
 
@@ -36,17 +66,31 @@ class Upload extends Component {
         }
     }
 
+    saveVideoMetadata(metadata) {
+        const userUid = firebase.auth().currentUser.uid;
+        const videoRef = firebase.firestore().doc(`users/${userUid}`).collection('videos').doc();
+        metadata = Object.assign(metadata, { uid: videoRef.id });
+
+        videoRef.set(metadata, { merge: true});
+    }
+
     render() {
         return (
-            <form onSubmit={e => this.handleSubmit(e)}>
-                <h2>Video Upload</h2>
-                <input 
-                    type="file"
-                    accept="video/*"
-                    onChange={e => this.handleChange(e)}
-                />
-                <button type="submit">Upload</button>
-            </form>
+            <LoadingOverlay
+                active={this.state.loading}
+                spinner
+                text='Loading your content...'
+            >
+                <form onSubmit={e => this.handleSubmit(e)}>
+                    <h2>Video Upload</h2>
+                    <input 
+                        type="file"
+                        accept="video/*"
+                        onChange={e => this.handleChange(e)}
+                    />
+                    <button type="submit">Upload Video</button>
+                </form>
+            </LoadingOverlay>
         );
     }
 }
