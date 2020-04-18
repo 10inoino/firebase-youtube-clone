@@ -8,6 +8,7 @@ import VideoPlayer from './VideoPlayer';
 
 const styles = theme => ({
     root: {
+        flexGrow: 0,
         padding: "50px",
     },
 });
@@ -20,15 +21,18 @@ class VideoFeed extends Component {
     }
 
     async componentDidMount() {
-        const datas = [];
-        const collection = await firebase.firestore().collection('videos').limit(50);
-        const querySnapshot = await collection.get();
-
-        await querySnapshot.forEach(doc => {
-            datas.push(doc.data());
-        });
-
-        this.setState({ videos: datas });
+        if (firebase.auth().currentUser){
+            const datas = [];
+            const userUid = firebase.auth().currentUser.uid;
+            const collection = await firebase.firestore().doc(`users/${userUid}`).collection('videos').limit(50);
+            const querySnapshot = await collection.get();
+    
+            await querySnapshot.forEach(doc => {
+                datas.push(doc.data());
+            });
+    
+            this.setState({ videos: datas });
+        }
     }
 
     renderVideoPlayers(videos) {
