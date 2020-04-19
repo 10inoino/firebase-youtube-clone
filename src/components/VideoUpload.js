@@ -67,11 +67,8 @@ class Upload extends Component {
     }
 
     saveVideoMetadata(metadata) {
-        const userUid = firebase.auth().currentUser.uid;
-        const videoRef = firebase.firestore().doc(`users/${userUid}`).collection('videos').doc();
-        metadata = Object.assign(metadata, { uid: videoRef.id });
-
-        videoRef.set(metadata, { merge: true});
+        const collection = firebase.firestore().collection('videos');
+        return collection.add(metadata);
     }
 
     render() {

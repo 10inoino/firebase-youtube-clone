@@ -21,10 +21,8 @@ class VideoFeed extends Component {
     }
 
     async componentDidMount() {
-        if (firebase.auth().currentUser){
             const datas = [];
-            const userUid = firebase.auth().currentUser.uid;
-            const collection = await firebase.firestore().doc(`users/${userUid}`).collection('videos').limit(50);
+            const collection = await firebase.firestore().collection('videos').limit(50);
             const querySnapshot = await collection.get();
     
             await querySnapshot.forEach(doc => {
@@ -32,7 +30,6 @@ class VideoFeed extends Component {
             });
     
             this.setState({ videos: datas });
-        }
     }
 
     renderVideoPlayers(videos) {
